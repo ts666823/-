@@ -24,7 +24,7 @@ bool PopSprite::init() {
 	return true;
 }
 
-bool PopSprite::privateInit(int color, int width, int height, int popSpriteX, int popSpriteY)
+bool PopSprite::privateInit(int color, int width, int height, float popSpriteX, float popSpriteY)
 {
 	//³õÊ¼»¯
 	iColor = color;
@@ -47,10 +47,11 @@ bool PopSprite::setColor(int colors)
 	iColor = colors;
 	switch (iColor)
 	{
+	case -1:ColorBlock->setColor(Color3B(200, 190, 180)); break;
 	case 1:ColorBlock->setColor(Color3B(220, 20, 60)); break;
 	case 2:ColorBlock->setColor(Color3B(0, 0, 205)); break;
 	case 3:ColorBlock->setColor(Color3B(46, 139, 87)); break;
-	case 1:ColorBlock->setColor(Color3B(220, 20, 60)); break;
+	case 4:ColorBlock->setColor(Color3B(0, 0, 0)); break;
 	default:
 		return false;
 	}
@@ -70,11 +71,13 @@ int PopSprite::getPopY()
 bool PopSprite::setPopX(int x)
 {
 	popX = x;
+	return true;
 }
 
 bool PopSprite::setPopY(int y)
 {
 	popY = y;
+	return true;
 }
 
 Point PopSprite::getPoint()
