@@ -1,30 +1,8 @@
-/****************************************************************************
- Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
- 
- http://www.cocos2d-x.org
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ****************************************************************************/
-
 #include "HelloWorldScene.h"
+//下一个场景
 #include "MyScene.h"
-#include "SimpleAudioEngine.h"//声音引擎
+//声音引擎
+#include "SimpleAudioEngine.h"
 
 USING_NS_CC;
 
@@ -33,25 +11,48 @@ Scene* HelloWorld::createScene()
     return HelloWorld::create();
 }
 
-// Print useful error message instead of segfaulting when files are not there.
+//故障加载
 static void problemLoading(const char* filename)
 {
     printf("Error while loading: %s\n", filename);
     printf("Depending on how you compiled you might have to add 'Resources/' in front of filenames in HelloWorldScene.cpp\n");
 }
 
-// on "init" you need to initialize your instance
+//初始化
 bool HelloWorld::init()
 {
-    //////////////////////////////
-    // 1. super init first
+   
     if ( !Scene::init() )
     {
         return false;
     }
+	
+	/*//音效和音乐
+	//获取一个UserDefault的实例
+	auto userDef = UserDefault::getInstance();
+	//0表示有音乐，1表示无音乐，2表示不存在
+	if (userDef->getIntegerForKey(MUSICKEY, 2)==2);
+	{
+		userDef->setIntegerForKey(MUSICKEY, 0);
+	}
 
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+	if (userDef->getIntegerForKey(SOUNDKEY, 2) == 2);
+	{
+		userDef->setIntegerForKey(SOUNDKEY, 0);
+	}
+
+	//提前加载音乐文件
+	auto audioEngine = CocosDenshion::SimpleAudioEngine::getInstance();
+	audioEngine->preloadBackgroundMusic("music_bg.mp3");
+	audioEngine->preloadBackgroundMusic("music_bg_HelloWorldScene.mp3");
+	audioEngine->preloadEffect("music_remove.wav");
+	audioEngine->preloadEffect("music_fail.wav");
+	audioEngine->preloadEffect("music_gameOver.wav");
+	audioEngine->preloadEffect("music_win.wav");*/
+
+	//获得屏幕尺寸
+    const auto visibleSize = Director::getInstance()->getVisibleSize();
+    const Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
 	//设置一个精灵。
 	auto sprite = Sprite::create("HelloWorld.png");
@@ -77,8 +78,8 @@ bool HelloWorld::init()
 
 	//设置一个关闭按钮：
     auto closeItem = MenuItemImage::create(
-                                           "CloseNormal.png",
-                                           "CloseSelected.png",
+										   "begin.png",
+                                           "begin.png",
                                            CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
 
     if (closeItem == nullptr ||
@@ -90,7 +91,7 @@ bool HelloWorld::init()
     else
     {
         float x = origin.x + visibleSize.width - closeItem->getContentSize().width/2;
-        float y = origin.y + closeItem->getContentSize().height/2;
+        float y = origin.y + visibleSize.height-closeItem->getContentSize().height/2;
         closeItem->setPosition(Vec2(x,y));
     }
 
@@ -110,33 +111,25 @@ bool HelloWorld::init()
 	{
 		goItem->setPosition(Vec2(origin.x + visibleSize.width / 2 , origin.y / 2+visibleSize.height/2- sprite->getContentSize().height/2));
 	}
-    // create menu, it's an autorelease object
+
+	//创建菜单
     auto menu = Menu::create(closeItem,goItem ,NULL);
     menu->setPosition(Vec2::ZERO);
     this->addChild(menu, 1);
-
-
-    
     return true;
 }
 
-
-void HelloWorld::menuCloseCallback(Ref* pSender)//按钮
+//关闭按钮的函数
+void HelloWorld::menuCloseCallback(Ref* pSender)
 {
-    //Close the cocos2d-x game scene and quit the application
     Director::getInstance()->end();
-
-    /*To navigate back to native iOS screen(if present) without quitting the application  ,do not use Director::getInstance()->end() as given above,instead trigger a custom event created in RootViewController.mm as below*/
-
-    //EventCustom customEndEvent("game_scene_close_event");
-    //_eventDispatcher->dispatchEvent(&customEndEvent);
-
-
 }
 
+//开始按钮的函数
 void HelloWorld::menuNextCallback(Ref* pSender)
 {
-	auto scene = MyScene::createScene();
-	Director::getInstance()->replaceScene(scene);
-
+	//转场效果
+	Scene* gameScene = MyScene::createScene();
+	TransitionScene* transition = CCTransitionCrossFade::create(1, gameScene);
+	Director::getInstance()->replaceScene(transition);
 }
