@@ -15,13 +15,19 @@ public:
 	//设置X,Y坐标的函数
 	bool setPopX(int x);
 	bool setPopY(int y);
-	//获取某个PopSprite位置的函数
+	//获取某个PopSprite位置的函数,以point形式返回
 	Point getPoint();
-	//PopSprite的坐标
-	int popX, popY;
+	//获取canRemove
+	bool getCanRemove();
+	//设置canRemove
+	void setCanRemove(bool state);
 	//宏定义，内存管理
 	CREATE_FUNC(PopSprite);
 private:
+	//PopSprite的坐标
+	int popX, popY;
+	//是否可以消除
+	bool canRemove = false;
 	//颜色
 	int iColor;
 	//私有化的初始方法

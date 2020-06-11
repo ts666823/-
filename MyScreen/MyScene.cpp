@@ -38,81 +38,44 @@ bool MyScene::init()
 	createPopSquare(visibleSize);
 	//绘制方阵
 	drawSquare();
-
-	/*//设置监听,滑动方式交换两个pop
-	auto touchListener = EventListenerTouchOneByOne::create();
-	touchListener->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
-	touchListener->onTouchMoved = CC_CALLBACK_2(MyScene::onTouchMoved, this);
-	touchListener->onTouchEnded = CC_CALLBACK_2(MyScene::onTouchEnded, this);
-	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);*/
 	//设置监听
-	auto touchListener = EventListenerTouchOneByOne::create();
-	touchListener->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
-	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
-	return true;
+	auto touchListenerBegin = EventListenerTouchOneByOne::create();
+	touchListenerBegin->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
+	touchListenerBegin->onTouchMoved = CC_CALLBACK_2(MyScene::onTouchMoved, this);
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListenerBegin, this);
+
+	
 }
 
 //监听点击
 bool MyScene::onTouchBegan(Touch* touch, Event* event)
 {
-	//获取整个屏幕的大小
-	Size visibleSize = Director::getInstance()->getVisibleSize();
-	//获取点击的位置
-	Point touchPosition = touch->getLocation();
-	//将位置信息交给getPopStarSprite函数
-	PopSprite* touchPop = getPopStarSprite(visibleSize, touchPosition);
-	//初始化记录数据的数组
-	PopNearBy = Array::create();
-	//如果传递回来的触碰Pop不为NULL
-	if (touchPop != NULL)
-	{
-		PopNearBy = checkPopNearBy(touchPop);
-	}
-	//log调试
-	log("x%i y%i color%i", touchPop->popX, touchPop->popY, touchPop->getColor());
-	return true;
-}
-/*//监听点击
-bool MyScene::onTouchBegan(Touch* touch, Event* event)
-{
-	if (canTouchBegin) {
+	touchPopBegin = NULL;
+	touchPopEnd = NULL;
+	if (canTouch) {
 		//获取整个屏幕的大小
 		Size visibleSize = Director::getInstance()->getVisibleSize();
 		//获取点击的位置
 		touchBeginPosition = touch->getLocation();
 		//将位置信息交给getPopStarSprite函数
 		touchPopBegin = getPopStarSprite(visibleSize, touchBeginPosition);
-		log("beginx:%i,beginy:%i", touchPopBegin->getPopX(), touchPopBegin->getPopY());
-		canTouchBegin = false;
-		canMove= true;
-		return true;
+		//log调试
+		log("1x%i 1y%i 1color%i", touchPopBegin->getPopX(), touchPopBegin->getPopY(), touchPopBegin->getColor());
 	}
-	else
-	{
-		return false;
+	return canTouch;
+}
+void MyScene::onTouchMoved(Touch* touch, Event* event)
+{
+	 if (!touchPopBegin || !canTouch) {
+		 return;
 	}
-	
+
+	 int startX = touchPopBegin->getPopX();
+	 int startY = touchPopBegin->getPopY();
+
+	 
 }
 
-//监听滑动
-bool MyScene::onTouchMoved(Touch* touch, Event* event)
-{
-	if (canMove) {
-		//获取整个屏幕的大小
-		Size visibleSize = Director::getInstance()->getVisibleSize();
-		//获取滑动结束后的位置
-		touchEndPosition = touch->getLocation();
-		//将位置信息交给getPopStarSprite函数
-		touchPopEnd = getPopStarSprite(visibleSize, touchBeginPosition);
-		log("endx:%i,endy:%i", touchPopEnd->getPopX(), touchPopEnd->getPopY());
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-
-}*/
 
 //getPopStarSprite函数
 PopSprite* MyScene::getPopStarSprite(Size size, Point touch)
@@ -130,106 +93,6 @@ PopSprite* MyScene::getPopStarSprite(Size size, Point touch)
 		return NULL;
 }
 
-//检测上下左右的函数
-Array* MyScene::checkPopNearBy(PopSprite* popStar)
-{
-	//用数组储存数据
-	Array* tempArr = Array::create();
-	//判断是否相同颜色
-	canRemove = false;
-	//获取点击位置的x，y坐标
-	int y = popStar->getPopY();
-	int x = popStar->getPopX();
-	int yUpCount = 0;
-	int yDownCount = 0;
-	int xRightCount = 0;
-	int xLeftCount = 0;
-	//判断点击位置向上的相同色块数
-	for (int up = y + 1; up < 10; up++)
-	{
-		if (popSquare[x][up]->getColor() == popSquare[x][y]->getColor())
-		{
-			yUpCount++;
-		}
-		else
-			break;
-	}
-	//判断点击位置向下的相同色块数
-	for (int down = y - 1; down >= 0; down--)
-	{
-		if (popSquare[x][down]->getColor() == popSquare[x][y]->getColor())
-		{
-			yDownCount++;
-		}
-		else
-			break;
-	}
-	//判断点击位置向右的相同色块数
-	for (int right = x + 1; right < 10; right++)
-	{
-		if (popSquare[right][y]->getColor() == popSquare[x][y]->getColor())
-		{
-			xRightCount++;
-		}
-		else
-			break;
-	}
-	//判断点击位置向左的相同色块数
-	for (int left = x - 1; left >= 0; left--)
-	{
-		if (popSquare[left][y]->getColor() == popSquare[x][y]->getColor())
-		{
-			xLeftCount++;
-		}
-		else
-			break;
-	}
-
-	//大于3就可以消除
-	if (yUpCount + yDownCount >= 2)
-	{
-		canRemove = true;
-		for (int i = 1; i <= yUpCount; i++)
-		{
-			tempArr->addObject(popSquare[x][y + i]);
-			//消除变成灰色，调试用
-			popSquare[x][y + i]->setColor(-1);
-		}
-		for (int i = 1; i <= yDownCount; i++)
-		{
-			tempArr->addObject(popSquare[x][y - i]);
-			//消除变成灰色，调试用
-			popSquare[x][y - i]->setColor(-1);
-		}
-	}
-	if (xRightCount + xLeftCount >= 2)
-	{
-		canRemove = true;
-		for (int i = 1; i <= xRightCount; i++)
-		{
-			tempArr->addObject(popSquare[x+i][y]);
-			//消除变成灰色，调试用
-			popSquare[x+i][y]->setColor(-1);
-		}
-		for (int i = 1; i <= xLeftCount; i++)
-		{
-			tempArr->addObject(popSquare[x-i][y]);
-			//消除变成灰色，调试用
-			popSquare[x-i][y]->setColor(-1);
-		}
-	}
-	
-	if (canRemove)
-	{
-		//消除变成灰色，调试用
-		popSquare[x][y]->setColor(-1);
-		//可以消除就把该点加入；
-		tempArr->addObject(popSquare[x][y]);
-		
-	}
-	return tempArr;
-}
-
 // 填充空白方阵，保证没有可消除的组合,dfs
 void MyScene::fillSquare(int x, int y)
 {
@@ -245,7 +108,7 @@ void MyScene::fillSquare(int x, int y)
 	{
 		popSquare[x][y]->setColor(randcolor);
 
-		checkPopNearBy(popSquare[x][y]);
+		checkPopCanRemove();
 		// 如果没有消除则继续填充
 		if (!canRemove)
 		{
@@ -304,14 +167,234 @@ void MyScene::createPopSquare(Size size) {
 		{
 			//设置block方块
 			PopSprite* block = PopSprite::createPopSprite(-1, len, len, len * i + 20, len * j + 20 + size.height / 6);
+			
 			//设置坐标和颜色
 			block->setPopX(i);
 			block->setPopY(j);
 			block->setColor(-1);
+
 			//把精灵添加到当前场景中
 			addChild(block);
+
 			//添加到数组中；
 			popSquare[i][j] = block;
 		}
 	}
+}
+
+//检测消除的函数
+void MyScene::checkPopCanRemove()
+{
+	PopSprite* pop;
+	for (int i = 0; i < squareWidth; i++)
+	{
+		for (int j = 0; j < squareHeight; j++)
+		{
+			pop = popSquare[i][j];
+			if (pop->getCanRemove())
+				continue;
+			// 建立一个list 存储在本精灵周围（上下）与本精灵相同的精灵
+			std::list< PopSprite*> yList;
+			getYCheck(pop, yList);
+			// 建立一个list 存储在本精灵周围（左右）与本精灵相同的精灵
+			std::list< PopSprite*> xList;
+			getXCheck(pop, xList);
+
+			// 将精灵个数多的list 赋值 给longList
+			std::list< PopSprite*>& longList = yList.size() > xList.size() ? yList : xList;
+			// 如果相同精灵的个数小于3个 则跳过
+			if (longList.size() < 3) {
+				continue;
+			}
+			for (std::list<PopSprite*>::iterator itor = longList.begin(); itor != longList.end(); itor++)
+			{
+				PopSprite* popInList;
+				popInList = (PopSprite*)* itor;
+				markPopRemove(popInList);
+			}
+		}
+	}
+	removePop();
+}
+
+void MyScene::markPopRemove(PopSprite* pop)
+{
+	if (pop->getCanRemove())
+		return;
+	pop->setCanRemove(true);
+}
+
+void MyScene::removePop()
+{
+	isRemoving = true;
+	for (int i = 0; i < squareWidth; i++)
+	{
+		for (int j = 0; j < squareHeight; j++)
+		{
+			PopSprite* pop = popSquare[i][j];
+			if (!pop)
+				continue;
+			if (pop->getCanRemove())
+			{
+				isNeedFill = true;
+				explodeSprite(pop);
+			}
+		}
+	}
+}
+
+void MyScene::explodeSprite(PopSprite* pop)
+{
+	pop->runAction(Sequence::create(
+		ScaleTo::create(0.2f, 0.0),
+		CallFuncN::create(CC_CALLBACK_1(MyScene::actionEndCallback, this)),
+		NULL
+	));
+}
+
+//回调函数
+void MyScene::actionEndCallback(Node* popNode)
+{
+	PopSprite* pop = (PopSprite*)popNode;
+	popSquare[pop->getPopX()][pop->getPopY()] = NULL;
+	pop->removeFromParent();
+}
+
+//检查周围的相同精灵
+void MyScene::getXCheck(PopSprite* pop, std::list<PopSprite*>& xList)
+{
+	xList.push_back(pop);
+	int left = pop->getPopX() - 1;
+	int right = pop->getPopX() + 1;
+	//向左查找
+	while (left >= 0)
+	{
+		PopSprite* popNear = popSquare[left][pop->getPopY()];
+		if (popNear && popNear->getColor() == pop->getColor()&&!popNear->getCanRemove())
+		{
+			xList.push_back(popNear);
+			left--;
+		}
+		else
+		{
+			break;
+		}
+	}
+	//向右判断
+	while (right < squareWidth )
+	{
+		PopSprite* popNear = popSquare[right][pop->getPopY()];
+		if (popNear && popNear->getColor() == pop->getColor() && !popNear->getCanRemove())
+		{
+			xList.push_back(popNear);
+			right++;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+void MyScene::getYCheck(PopSprite* pop, std::list<PopSprite*>& xList)
+{
+	xList.push_back(pop);
+	int down = pop->getPopY() - 1;
+	int up = pop->getPopY() + 1;
+	//向下查找
+	while (down >= 0)
+	{
+		PopSprite* popNear = popSquare[pop->getPopX()][down];
+		if (popNear && popNear->getColor() == pop->getColor() && !popNear->getCanRemove())
+		{
+			xList.push_back(popNear);
+			down--;
+		}
+		else
+		{
+			break;
+		}
+	}
+	//向上判断
+	while (up < squareWidth)
+	{
+		PopSprite* popNear = popSquare[pop->getPopX()][up];
+		if (popNear && popNear->getColor() == pop->getColor() && !popNear->getCanRemove())
+		{
+			xList.push_back(popNear);
+			up++;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+
+void MyScene::fillSprite(Size size)
+{
+	isFilling = true;
+
+	const int len = (size.width - 28) / 10;
+
+	int* xNeedFill = (int*)malloc(sizeof(int) * squareWidth);
+	memset(xNeedFill, 0, sizeof(int) * squareWidth);
+
+	//下降填充
+	PopSprite* oldPop = NULL;
+	for (int i = 0; i < squareWidth; i++)
+	{
+
+		int numRomvedPop;
+		for (int j = 0; j < squareHeight; j++)
+		{
+			oldPop = popSquare[i][j];
+			if (oldPop == NULL)
+			{
+				numRomvedPop++;
+			}
+			else
+			{  //如果该列有消除就降落原来的方块
+				if (numRomvedPop > 0) {
+					popSquare[i][j - numRomvedPop] = oldPop;
+					popSquare[i][j] = NULL;
+
+					Point startPosition = oldPop->getPosition();
+					Point endPosition = getPositionOfPop(size,i,j-numRomvedPop);
+					float speed = (startPosition.y - endPosition.y) / size.height * 3;
+					oldPop->stopAllActions();
+					oldPop->runAction(CCMoveTo::create(speed, endPosition));
+					oldPop->setPopY = j - numRomvedPop;
+				}
+			}
+		}
+		xNeedFill[i] = numRomvedPop;
+	}
+	for (int i = 0; i < squareWidth; i++)
+	{
+		for (int j = squareHeight - xNeedFill[i]; j < squareHeight; j++)
+		{
+			PopSprite* block = PopSprite::createPopSprite(-1, len, len, len * i + 20, len * j + 20 + size.height / 6);
+
+			int randcolor = rand() % 4 + 1;
+			//设置坐标和颜色
+			block->setPopX(i);
+			block->setPopY(j);
+			block->setColor(randcolor);
+
+			//把精灵添加到当前场景中
+			addChild(block);
+
+			//添加到数组中；
+			popSquare[i][j] = block;
+		}
+	}
+ }
+
+Point MyScene::getPositionOfPop(Size size,int row,int col)
+{
+	const int len = (size.width - 28) / 10;
+	float x = len * row + 20;
+	float y = len * (col) + 20 + size.height / 6;
+	return Point(x, y);
 }

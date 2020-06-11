@@ -31,7 +31,7 @@ bool PopSprite::privateInit(int color, int width, int height, float popSpriteX, 
 	popX = 0;
 	popY = 0;
 	//颜色的初始化
-	ColorBlock = LayerColor::create(Color4B(248, 248, 255,200),width-5,height-5);
+	ColorBlock = LayerColor::create(Color4B(248, 248, 255, 200), width - 5, height - 5);
 	ColorBlock->setPosition(Vec2(popSpriteX, popSpriteY));
 	this->addChild(ColorBlock);
 	return true;
@@ -85,5 +85,10 @@ Point PopSprite::getPoint()
 	return ColorBlock->getPosition();
 }
 
+bool PopSprite::getCanRemove() {
+	return canRemove;
+}
 
-
+void PopSprite::setCanRemove(bool state) {
+	canRemove = state;
+}
