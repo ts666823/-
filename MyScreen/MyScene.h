@@ -28,9 +28,12 @@ public:
     //监听点击
 	virtual bool onTouchBegan(Touch* touch, Event* event);
 	virtual void onTouchMoved(Touch* touch, Event* event);
+	//交换两个pop
+	void swapPop();
 	//是否正在进行移除、填充
 	bool isRemoving;
 	bool isFilling;
+	bool isSwapping;
 	//是否有需要填充
 	bool isNeedFill;
 	//交换函数
@@ -39,8 +42,10 @@ public:
 private:
 	//色块方阵
 	PopSprite* popSquare[squareWidth][squareHeight];
+	//检测某个精灵可以消除
+	bool getPopChecked(PopSprite* pop);
 	//检测是否有可以消除的精灵
-	void checkPopCanRemove();
+	void checkAndRemove();
 	//标记可以移除的精灵，做效果
 	void markPopRemove(PopSprite* pop);
 	//移除精灵
@@ -66,7 +71,7 @@ private:
 	PopSprite* touchPopBegin;
 	PopSprite* touchPopEnd;
 	//状态量
-	bool canTouch;
+	bool canTouch =true;
 	bool secondTouch;
 };
 

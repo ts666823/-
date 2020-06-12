@@ -39,10 +39,10 @@ bool MyScene::init()
 	//绘制方阵
 	drawSquare();
 	//设置监听
-	auto touchListenerBegin = EventListenerTouchOneByOne::create();
-	touchListenerBegin->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
-	touchListenerBegin->onTouchMoved = CC_CALLBACK_2(MyScene::onTouchMoved, this);
-	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListenerBegin, this);
+	auto touchListener = EventListenerTouchOneByOne::create();
+	touchListener->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
+	touchListener->onTouchMoved = CC_CALLBACK_2(MyScene::onTouchMoved, this);
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
 
 	
 }
@@ -60,24 +60,146 @@ bool MyScene::onTouchBegan(Touch* touch, Event* event)
 		//将位置信息交给getPopStarSprite函数
 		touchPopBegin = getPopStarSprite(visibleSize, touchBeginPosition);
 		//log调试
-		log("1x%i 1y%i 1color%i", touchPopBegin->getPopX(), touchPopBegin->getPopY(), touchPopBegin->getColor());
+		
 	}
 	return canTouch;
 }
+
 void MyScene::onTouchMoved(Touch* touch, Event* event)
 {
 	 if (!touchPopBegin || !canTouch) {
 		 return;
 	}
-
-	 int startX = touchPopBegin->getPopX();
-	 int startY = touchPopBegin->getPopY();
-
-	 
+	 //获取尺寸
+	 Size size = Director::getInstance()->getVisibleSize();
+	 const int len = (size.width - 28) / 10;
+	 //点击位置
+	 auto touchEndPosition = touch->getLocation();
+	 log("1 %f 1 %f", touchBeginPosition.x, touchBeginPosition.y);
+	 log("2 %f 2 %f",touchEndPosition.x, touchEndPosition.y);
+	 int beginX = touchPopBegin->getPopX();
+	 int beginY = touchPopBegin->getPopY();
+	 //向上的方向,构造矩形，判断位置
+	 auto upRect = Rect(touchBeginPosition.x - len / 2,
+		 touchBeginPosition.y + len / 2,
+		 len,
+		 len);
+	 //向下的方向
+	 auto downRect = Rect(touchBeginPosition.x - len / 2,
+		 touchBeginPosition.y - (3*len / 2),
+		 len,
+		 len);
+	 //向右的方向
+	 auto rightRect = Rect(touchBeginPosition.x + len / 2,
+		 touchBeginPosition.y - len / 2,
+		 len,
+		 len);
+	 //向左的方向
+	 auto leftRect = Rect(touchBeginPosition.x -(3*len / 2),
+		 touchBeginPosition.y -  len / 2,
+		 len,
+		 len);
+	 if (upRect.containsPoint(touchEndPosition))
+	 {
+		 beginY++;
+		 if (beginY < squareHeight)
+		 {
+			touchPopEnd = popSquare[beginX][beginY];
+			log("1  1 ");
+		 }
+		 swapPop();
+		 return;
+	 }
+	 else if (downRect.containsPoint(touchEndPosition))
+	 {
+		 beginY--;
+		 if (beginY >= 0)
+		 {
+			 touchPopEnd = popSquare[beginX][beginY];
+			 log("2  2 ");
+		 }
+		 swapPop();
+		 return;
+	 }
+	 else if (leftRect.containsPoint(touchEndPosition))
+	 {
+		 beginX--;
+		 if (beginX >= 0)
+		 {
+			 touchPopEnd = popSquare[beginX][beginY];
+			 log("3  3 ");
+		 }
+		 swapPop();
+		 return;
+	 }
+	 else if (rightRect.containsPoint(touchEndPosition))
+	 {
+		 beginX++;
+		 if (beginX < squareWidth)
+		 {
+			 touchPopEnd = popSquare[beginX][beginY];
+			 log("4  4 ");
+		 }
+		 swapPop();
+		 return;
+	 }
 }
 
+void MyScene::swapPop()
+{
+	isSwapping = true;
+	canTouch = false;
+	//如果初始精灵和末尾精灵没有则不交换
+	if (!touchPopBegin || !touchPopEnd)
+		return;
+	int beginX = touchPopBegin->getPopX();
+	int beginY = touchPopBegin->getPopY();
+	int endX = touchPopEnd->getPopX();
+	int endY = touchPopEnd->getPopY();
+	Point beginPos = touchPopBegin->getPoint();
+	Point endPos = touchPopEnd->getPoint();
+	//交换方阵中的位置
+	popSquare[beginX][beginY] = touchPopEnd;
+	popSquare[endX][endY] = touchPopBegin;
+	//改变pop的位置
+	touchPopBegin->setPopX(endX);
+	touchPopBegin->setPopY(endY);
+	touchPopEnd->setPopX(beginX);
+	touchPopEnd->setPopY(beginY);
 
-//getPopStarSprite函数
+	//检查交换后是否能消除
+	if (getPopChecked(touchPopEnd) || getPopChecked(touchPopBegin))
+	{
+		//可以消除就交换位置
+		touchPopBegin->runAction(MoveTo::create(0.2, endPos));
+		touchPopEnd->runAction(MoveTo::create(0.2, beginPos));
+		return;
+	}
+
+	//不能消除
+	//交换方阵中的位置
+	popSquare[endX][endY] = touchPopEnd;
+	popSquare[beginX][beginY] = touchPopBegin;
+	//改变pop的位置
+	touchPopBegin->setPopX(beginX);
+	touchPopBegin->setPopY(beginY);
+	touchPopEnd->setPopX(endX);
+	touchPopEnd->setPopY(endY);
+
+	touchPopBegin->runAction(Sequence::create(
+		MoveTo::create(0.2, endPos),
+		MoveTo::create(0.2, beginPos),
+		NULL
+	));
+	touchPopEnd->runAction(Sequence::create(
+		MoveTo::create(0.2, beginPos),
+		MoveTo::create(0.2, endPos),
+		NULL
+	));
+	return;
+}
+
+//getPopStarSprite函数获取触摸点在方阵中对应的pop
 PopSprite* MyScene::getPopStarSprite(Size size, Point touch)
 {
 	//PopSprite 精灵的长和宽
@@ -108,9 +230,7 @@ void MyScene::fillSquare(int x, int y)
 	{
 		popSquare[x][y]->setColor(randcolor);
 
-		checkPopCanRemove();
-		// 如果没有消除则继续填充
-		if (!canRemove)
+		if (!getPopChecked(popSquare[x][y]))
 		{
 			// 四个方向递归填充
 			fillSquare(x + 1, y);
@@ -182,8 +302,23 @@ void MyScene::createPopSquare(Size size) {
 	}
 }
 
-//检测消除的函数
-void MyScene::checkPopCanRemove()
+//检测某个精灵是否可以消除
+bool MyScene::getPopChecked(PopSprite* pop)
+{
+	std::list<PopSprite*>xList;
+	std::list<PopSprite*>yList;
+
+	getXCheck(pop, xList);
+	getYCheck(pop, yList);
+	if (xList.size() >= 3 || yList.size() >= 3)
+	{
+		return true;
+	}
+	return false;
+}
+
+//检测消除和移除的函数
+void MyScene::checkAndRemove()
 {
 	PopSprite* pop;
 	for (int i = 0; i < squareWidth; i++)
@@ -364,7 +499,7 @@ void MyScene::fillSprite(Size size)
 					float speed = (startPosition.y - endPosition.y) / size.height * 3;
 					oldPop->stopAllActions();
 					oldPop->runAction(CCMoveTo::create(speed, endPosition));
-					oldPop->setPopY = j - numRomvedPop;
+					oldPop->setPopY ( j - numRomvedPop);
 				}
 			}
 		}
