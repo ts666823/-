@@ -1,9 +1,13 @@
+#define KIND_OF_POP 6
+
 #include "cocos2d.h"
 USING_NS_CC;
-class PopSprite : public Sprite{
+
+
+class PopSprite : public Sprite {
 public:
 	//初始化游戏的数值，宽度，高度，x轴，y轴
-	static PopSprite* createPopSprite(int color,int width,int height,float popSpriteX,float popSpriteY);
+	static PopSprite* createPopSprite(int color, int x, int y);
 	virtual bool init();
 	//获取颜色的函数
 	int getColor();
@@ -15,8 +19,6 @@ public:
 	//设置X,Y坐标的函数
 	bool setPopX(int x);
 	bool setPopY(int y);
-	//获取某个PopSprite位置的函数,以point形式返回
-	Point getPoint();
 	//获取canRemove
 	bool getCanRemove();
 	//设置canRemove
@@ -30,9 +32,16 @@ private:
 	bool canRemove = false;
 	//颜色
 	int iColor;
-	//私有化的初始方法
-	bool privateInit(int color,int width, int height, float popSpriteX, float popSpriteY);
-	//显示的颜色
-	LayerColor* ColorBlock;
 };
+
+//显示的精灵图片
+static const char* popNormal[KIND_OF_POP] = {
+	"icon1.png",
+	"icon2.png",
+	"icon3.png",
+	"icon4.png",
+	"icon5.png",
+	"icon6.png"
+};
+
 
