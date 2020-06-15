@@ -41,13 +41,8 @@ public:
 	//交换两个pop
 	void swapPop();
 
-	//是否正在进行移除、填充
-	bool isRemoving;
-	bool isFilling;
-	bool isSwapping;
-
-	//是否有需要填充
-	bool isNeedFill;
+	//计时函数
+	void timeCount(float dt);
 
 	CREATE_FUNC(MyScene);
 private:
@@ -80,7 +75,25 @@ private:
 	void getXCheck(PopSprite* pop, std::list<PopSprite*>& iList);
 
 	// 填补空缺
-	//void fillSprite(Size size);
+	void fillSprite(Size size);
+
+	//更新的函数
+	void update(float dt);
+
+	//状态量
+	//是否可以触摸
+	bool canTouch = true;
+
+	//是否在执行操作，操作时不能触摸
+	bool isRunningAction = false;
+
+	//是否正在进行移除、填充
+	bool isRemoving = false;
+	bool isFilling = false;
+	bool isSwapping = false;
+
+	//是否有需要填充
+	bool isNeedFill = false;
 
 	//点击的位置
 	Point touchBeginPosition = Point(-1,-1);
@@ -90,8 +103,11 @@ private:
 	PopSprite* touchBeginPop;
 	PopSprite* touchEndPop;
 
-	//状态量
-	bool canTouch =true;
+	//时间
+	int iTime= 30;
+	
+	//分数
+	int iScore = 0;
 	
 	//精灵表单
 	SpriteBatchNode* spriteSheet;

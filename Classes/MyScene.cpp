@@ -31,6 +31,19 @@ bool MyScene::init()
 	// 把label添加到画面层
 	this->addChild(label, 1);
 
+	//时间label
+	auto timeLabel = Label::createWithTTF(StringUtils::format("Time : %d",iTime), "fonts/Marker Felt.ttf", 30);
+	timeLabel->setPosition(Vec2(timeLabel->getContentSize().width, visibleSize.height - timeLabel->getContentSize().height));
+	//需要通过tag来找到并改变timeLabel
+	timeLabel->setTag(1);
+	this->addChild(timeLabel,1);
+
+	//分数label
+	auto scoreLabel = Label::createWithTTF(StringUtils::format("Score : %d", iScore), "fonts/Marker Felt.ttf", 30);
+	scoreLabel->setPosition(Vec2(visibleSize.width / 2, visibleSize.height - scoreLabel->getContentSize().height * 3));
+	scoreLabel->setTag(2);
+	this->addChild(scoreLabel, 1);
+	
 	//背景图片
 	auto sprite = Sprite::create("1.jpg");
 		// position the sprite on the center of the screen
@@ -46,6 +59,14 @@ bool MyScene::init()
 
 	//产生方阵：
 		createPopSquare(visibleSize);
+
+	//更新函数：
+		scheduleUpdate();
+
+	//利用schedule来设置时间间隔的更新
+		schedule(schedule_selector(MyScene::timeCount), 1.0f);
+
+
 	//设置监听
 	auto touchListener = EventListenerTouchOneByOne::create();
 	touchListener->onTouchBegan = CC_CALLBACK_2(MyScene::onTouchBegan, this);
@@ -167,6 +188,7 @@ PopSprite* MyScene::getPop(Size size, Point point)
 	return NULL;
 }
 
+//交换两个点击对象
 void MyScene::swapPop()
 {
 	//获取位置，用于getPositionOfPop
@@ -198,11 +220,9 @@ void MyScene::swapPop()
 	if (getPopChecked(touchEndPop) || getPopChecked(touchBeginPop))
 	{
 		//可以消除就交换位置
-		touchBeginPop->runAction(MoveTo::create(1, endPos));
-		touchEndPop->runAction(MoveTo::create(1, beginPos));
+		touchBeginPop->runAction(MoveTo::create(0.2, endPos));
+		touchEndPop->runAction(MoveTo::create(0.2, beginPos));
 		log("1");
-		log("B:%i  %i", touchBeginPop->getPopX(), touchBeginPop->getPopY());
-		log("E:%i  %i", touchEndPop->getPopX(), touchEndPop->getPopY());
 		return;
 	}
 
@@ -210,6 +230,7 @@ void MyScene::swapPop()
 	//交换方阵中的位置
 	popSquare[endX][endY] = touchEndPop;
 	popSquare[beginX][beginY] = touchBeginPop;
+
 	//改变pop的位置
 	touchBeginPop->setPopX(beginX);
 	touchBeginPop->setPopY(beginY);
@@ -227,8 +248,6 @@ void MyScene::swapPop()
 		NULL
 	));
 	log("2");
-	log("B:%i  %i", touchBeginPop->getPopX(), touchBeginPop->getPopY());
-	log("E:%i  %i", touchEndPop->getPopX(), touchEndPop->getPopY());
 	return;
 }
 
@@ -376,7 +395,7 @@ void MyScene::actionEndCallback(Node* popNode)
 	pop->removeFromParent();
 }
 
-//检查周围的相同精灵
+//检查周围的相同精灵分别是X轴和Y轴方向
 void MyScene::getXCheck(PopSprite* pop, std::list<PopSprite*>& xList)
 {
 	xList.push_back(pop);
@@ -447,7 +466,8 @@ void MyScene::getYCheck(PopSprite* pop, std::list<PopSprite*>& xList)
 	}
 }
 
-/*void MyScene::fillSprite(Size size)
+//下降填充
+void MyScene::fillSprite(Size size)
 {
 	isFilling = true;
 
@@ -461,7 +481,7 @@ void MyScene::getYCheck(PopSprite* pop, std::list<PopSprite*>& xList)
 	for (int i = 0; i < SQUARE_WIDTH; i++)
 	{
 
-		int numRomvedPop;
+		int numRomvedPop=0;
 		for (int j = 0; j < SQUARE_HEIGHT; j++)
 		{
 			oldPop = popSquare[i][j];
@@ -489,19 +509,94 @@ void MyScene::getYCheck(PopSprite* pop, std::list<PopSprite*>& xList)
 	{
 		for (int j = SQUARE_HEIGHT - xNeedFill[i]; j < SQUARE_HEIGHT; j++)
 		{
-			PopSprite* block = PopSprite::createPopSprite(-1, len, len, len * i + 20, len * j + 20 + size.height / 6);
 
-			int randcolor = rand() % 4 + 1;
-			//设置坐标和颜色
-			block->setPopX(i);
-			block->setPopY(j);
-			block->setColor(randcolor);
-
-			//把精灵添加到当前场景中
-			addChild(block);
-
-			//添加到数组中；
-			popSquare[i][j] = block;
+			//产生随机颜色
+			int randColor = rand() % 4 + 1;
+			//产生pop
+			createPop(size, randColor, i, j);
+			iScore += 5;
 		}
 	}
- }*/
+ }
+
+//更新函数
+void MyScene::update(float dt)
+{
+	if (isRemoving || isFilling || isSwapping)
+	{
+		isRunningAction = true;
+		isRemoving = false;
+		isFilling = false;
+		isSwapping = false;
+	}
+	if (isRunningAction)
+	{
+		isRunningAction = false;
+		for (int i = 0; i < SQUARE_HEIGHT; i++)
+		{
+			for (int j = 0; j < SQUARE_WIDTH; j++)
+			{
+				PopSprite* pop = popSquare[i][j];
+				if (pop)
+				{
+					if (pop->getNumberOfRunningActions() > 0)
+					{
+						isRunningAction = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+	canTouch = !isRunningAction;
+	if(!isRunningAction)
+	{
+		if (isNeedFill)
+		{
+			Size size = Director::getInstance()->getVisibleSize();
+			fillSprite(size);
+			isNeedFill = false;
+			Label* scoreLabel = (Label*)this->getChildByTag(2);
+			scoreLabel->setString(StringUtils::format("Score : %d", iScore));
+		}
+		//不需要执行填充
+		else
+		{
+			checkAndRemove();
+		}
+	}
+	
+}
+
+//时间变化
+void MyScene::timeCount(float dt)
+{
+	iTime--;
+	//如果时间到了，切换到游戏结束界面
+	if (iTime == 0)
+	{
+		//
+		Size size = Director::getInstance()->getVisibleSize();
+
+		//改变timeLabel,以tag寻找子节点
+		Label* timeLabel = (Label*)this->getChildByTag(1);
+		timeLabel->setScale(0);
+
+		//动画效果，游戏结束
+		auto gameOver = Sprite::create("GameOver.png");
+		gameOver->setPosition(Point(size.width / 2, size.height / 1));
+		addChild(gameOver, 1);
+		
+		//下落效果
+		auto move = MoveTo::create(1, Point(size.width / 2, size.height / 2));
+		gameOver->runAction(move);
+
+		return;
+	}
+	else if(iTime>0)
+	{
+		Label* timeLabel = (Label*)this->getChildByTag(1);
+		timeLabel->setString(StringUtils::format("Time : %d", iTime));
+		return;
+	}
+}
