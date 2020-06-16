@@ -323,8 +323,26 @@ void MyScene::checkAndRemove()
 		for (int j = 0; j < SQUARE_HEIGHT; j++)
 		{
 			pop = popSquare[i][j];
-			if (pop->getCanRemove())
+			pop->setIsNew(false);
+		}
+	}
+	
+	for (int i = 0; i < SQUARE_WIDTH; i++)
+	{
+		for (int j = 0; j < SQUARE_HEIGHT; j++)
+		{
+			bool createXRemovePop;
+
+			pop = popSquare[i][j];
+
+			//新生成的特殊精灵不检查
+			if (pop->getIsNew())
+			{
 				continue;
+			}
+
+			//看是否已经检查过了
+			bool haveChecked = false;
 			// 建立一个list 存储在本精灵周围（上下）与本精灵相同的精灵
 			std::list< PopSprite*> yList;
 			getYCheck(pop, yList);
@@ -334,6 +352,7 @@ void MyScene::checkAndRemove()
 
 			// 将精灵个数多的list 赋值 给longList
 			std::list< PopSprite*>& longList = yList.size() > xList.size() ? yList : xList;
+			createXRemovePop = xList.size() > yList.size() ? true : false;
 			// 如果相同精灵的个数小于3个 则跳过
 			if (longList.size() < 3) {
 				continue;
@@ -342,7 +361,28 @@ void MyScene::checkAndRemove()
 			{
 				PopSprite* popInList;
 				popInList = (PopSprite*)* itor;
+
+				//产生特殊的精灵
+				if (longList.size() >= 4)
+				{
+					//让点击交换的两个pop变成特殊的
+					if (popInList == touchBeginPop || popInList == touchEndPop)
+					{
+						haveChecked = true;
+						popInList->setCanRemove(false);
+						popInList->setIsNew(true);
+						popInList->setStatus(createXRemovePop ? X_REMOVE_POP:Y_REMOVE_POP);
+						continue;
+					}
+				}
 				markPopRemove(popInList);
+			}
+			//下落填充时产生的特殊精灵
+			if (!haveChecked && longList.size() > 3)
+			{
+				pop->setIsNew(true);
+				pop->setCanRemove(false);
+				pop->setStatus(createXRemovePop ? X_REMOVE_POP : Y_REMOVE_POP);
 			}
 		}
 	}
@@ -360,6 +400,7 @@ void MyScene::markPopRemove(PopSprite* pop)
 //消除
 void MyScene::removePop()
 {
+    Size size = Director::getInstance()->getVisibleSize();
 	isRemoving = true;
 	for (int i = 0; i < SQUARE_WIDTH; i++)
 	{
@@ -370,8 +411,18 @@ void MyScene::removePop()
 				continue;
 			if (pop->getCanRemove())
 			{
-				isNeedFill = true;
+				isNeedFill = true;	
+				//如果有特殊的精灵
+				if (pop->getStatus()== X_REMOVE_POP)
+				{
+					specialXExplode(size, getPositionOfPop(size, pop->getPopX(), pop->getPopY()));
+				}
+				else if (pop->getStatus() == Y_REMOVE_POP)
+				{
+					specialYExplode(size, getPositionOfPop(size, pop->getPopX(), pop->getPopY()));
+				}
 				explodeSprite(pop);
+
 			}
 		}
 	}
@@ -380,11 +431,75 @@ void MyScene::removePop()
 //爆炸消除效果
 void MyScene::explodeSprite(PopSprite* pop)
 {
+	 Size size = Director::getInstance()->getVisibleSize();
 	pop->runAction(Sequence::create(
 		ScaleTo::create(0.2f, 0.0),
 		CallFuncN::create(CC_CALLBACK_1(MyScene::actionEndCallback, this)),
 		NULL
 	));
+
+	auto circleSprite = Sprite::create("circle.png");
+	addChild(circleSprite, 10);
+	circleSprite->setPosition(getPositionOfPop(size,pop->getPopX(),pop->getPopY()));
+	circleSprite->setScale(0);// start size
+	circleSprite->runAction(Sequence::create(ScaleTo::create(0.2f, 1.0),
+		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, circleSprite)),
+		NULL));
+}
+
+//特殊精灵的消除
+void MyScene::specialXExplode(Size size,Point point)
+{
+	float scaleX = 4;
+	float scaleY = 0.7;
+	float time = 0.3;
+	Point startPosition = point;
+	float speed = 0.6f;
+
+	
+	auto colorSpriteRight = Sprite::create("colorHRight.png");
+	addChild(colorSpriteRight, 10);
+	Point endPosition1 = Point(point.x - size.width, point.y);
+	colorSpriteRight->setPosition(startPosition);
+	colorSpriteRight->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
+		MoveTo::create(speed, endPosition1),
+		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteRight)),
+		NULL));
+
+	auto colorSpriteLeft = Sprite::create("colorHLeft.png");
+	addChild(colorSpriteLeft, 10);
+	Point endPosition2 = Point(point.x + size.width, point.y);
+	colorSpriteLeft->setPosition(startPosition);
+	colorSpriteLeft->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
+		MoveTo::create(speed, endPosition2),
+		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteLeft)),
+		NULL));
+}
+void MyScene::specialYExplode(Size size,Point point)
+{
+	float scaleY = 4;
+	float scaleX = 0.7;
+	float time = 0.3;
+	Point startPosition = point;
+	float speed = 0.6f;
+
+	auto colorSpriteDown = Sprite::create("colorVDown.png");
+	addChild(colorSpriteDown, 10);
+	Point endPosition1 = Point(point.x, point.y - size.height);
+	colorSpriteDown->setPosition(startPosition);
+	colorSpriteDown->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
+		MoveTo::create(speed, endPosition1),
+		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteDown)),
+		NULL));
+
+	auto colorSpriteUp = Sprite::create("colorVUp.png");
+	addChild(colorSpriteUp, 10);
+	Point endPosition2 = Point(point.x, point.y + size.height);
+	colorSpriteUp->setPosition(startPosition);
+	colorSpriteUp->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
+		MoveTo::create(speed, endPosition2),
+		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteUp)),
+		NULL));
 }
 
 //回调函数

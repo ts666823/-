@@ -65,6 +65,10 @@ private:
 	//爆炸移除效果
 	void explodeSprite(PopSprite* pop);
 
+	//特殊精灵的消除
+	void specialXExplode(Size size,Point point);
+	void specialYExplode(Size size,Point point);
+
 	// 对移除的精灵进行的操作，回调函数
 	void actionEndCallback(Node* node);
 
