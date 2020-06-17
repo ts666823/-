@@ -130,6 +130,6 @@ void HelloWorld::menuNextCallback(Ref* pSender)
 {
 	//转场效果
 	Scene* gameScene = MyScene::createScene();
-	TransitionScene* transition = CCTransitionCrossFade::create(1, gameScene);
+	TransitionScene* transition = CCTransitionCrossFade::create(2, gameScene);
 	Director::getInstance()->replaceScene(transition);
 }

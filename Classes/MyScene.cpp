@@ -395,6 +395,20 @@ void MyScene::markPopRemove(PopSprite* pop)
 	if (pop->getCanRemove())
 		return;
 	pop->setCanRemove(true);
+	if (pop->getStatus() == X_REMOVE_POP)
+	{
+		for (int i = 0; i < SQUARE_WIDTH; i++)
+		{
+			popSquare[i][pop->getPopY()]->setCanRemove(true);
+		}
+	}
+	else if (pop->getStatus() == Y_REMOVE_POP)
+	{
+		for (int i = 0; i < SQUARE_HEIGHT; i++)
+		{
+			popSquare[pop->getPopX()][i]->setCanRemove(true);
+		}
+	}
 }
 
 //消除
@@ -415,14 +429,13 @@ void MyScene::removePop()
 				//如果有特殊的精灵
 				if (pop->getStatus()== X_REMOVE_POP)
 				{
-					specialXExplode(size, getPositionOfPop(size, pop->getPopX(), pop->getPopY()));
+					specialXExplode(size, pop);
 				}
 				else if (pop->getStatus() == Y_REMOVE_POP)
 				{
-					specialYExplode(size, getPositionOfPop(size, pop->getPopX(), pop->getPopY()));
+					specialYExplode(size, pop);
 				}
 				explodeSprite(pop);
-
 			}
 		}
 	}
@@ -448,19 +461,23 @@ void MyScene::explodeSprite(PopSprite* pop)
 }
 
 //特殊精灵的消除
-void MyScene::specialXExplode(Size size,Point point)
+void MyScene::specialXExplode(Size size, PopSprite* pop)
 {
 	float scaleX = 4;
 	float scaleY = 0.7;
 	float time = 0.3;
-	Point startPosition = point;
-	float speed = 0.6f;
+	Point startPosition = getPositionOfPop(size,pop->getPopX(),pop->getPopY());
+	float speed = 0.3f;
 
-	
+	//缩放移动效果
+	//创建一个精灵图片，向右的方向
 	auto colorSpriteRight = Sprite::create("colorHRight.png");
 	addChild(colorSpriteRight, 10);
-	Point endPosition1 = Point(point.x - size.width, point.y);
+	//设定末位置
+	Point endPosition1 = Point(startPosition.x - size.width, startPosition.y);
 	colorSpriteRight->setPosition(startPosition);
+
+	//效果，缩放和移动
 	colorSpriteRight->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
 		MoveTo::create(speed, endPosition1),
 		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteRight)),
@@ -468,33 +485,38 @@ void MyScene::specialXExplode(Size size,Point point)
 
 	auto colorSpriteLeft = Sprite::create("colorHLeft.png");
 	addChild(colorSpriteLeft, 10);
-	Point endPosition2 = Point(point.x + size.width, point.y);
+
+	Point endPosition2 = Point(startPosition.x + size.width, startPosition.y);
 	colorSpriteLeft->setPosition(startPosition);
+
+
 	colorSpriteLeft->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
 		MoveTo::create(speed, endPosition2),
 		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteLeft)),
 		NULL));
 }
-void MyScene::specialYExplode(Size size,Point point)
+void MyScene::specialYExplode(Size size, PopSprite* pop)
 {
 	float scaleY = 4;
 	float scaleX = 0.7;
 	float time = 0.3;
-	Point startPosition = point;
-	float speed = 0.6f;
+	Point startPosition = getPositionOfPop(size, pop->getPopX(), pop->getPopY());;
+	float speed = 0.3f;
 
+	//向下的移动缩放效果
 	auto colorSpriteDown = Sprite::create("colorVDown.png");
 	addChild(colorSpriteDown, 10);
-	Point endPosition1 = Point(point.x, point.y - size.height);
+	Point endPosition1 = Point(startPosition.x, startPosition.y - size.height);
 	colorSpriteDown->setPosition(startPosition);
 	colorSpriteDown->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
 		MoveTo::create(speed, endPosition1),
 		CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, colorSpriteDown)),
 		NULL));
 
+	//向上的移动缩放效果
 	auto colorSpriteUp = Sprite::create("colorVUp.png");
 	addChild(colorSpriteUp, 10);
-	Point endPosition2 = Point(point.x, point.y + size.height);
+	Point endPosition2 = Point(startPosition.x, startPosition.y + size.height);
 	colorSpriteUp->setPosition(startPosition);
 	colorSpriteUp->runAction(Sequence::create(ScaleTo::create(time, scaleX, scaleY),
 		MoveTo::create(speed, endPosition2),
