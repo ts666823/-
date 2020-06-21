@@ -1,5 +1,6 @@
 #include "cocos2d.h"
-#include "ThePopSprite.h"
+#include "cocos-ext.h"
+#include"ThePopSprite.h"
 
 //方块矩阵的宽和高
 #define SQUARE_WIDTH  8
@@ -16,10 +17,12 @@ class MyScene : public cocos2d::Scene
 {
 public:
 	//生成场景
-	static cocos2d::Scene* createScene();
+	static cocos2d::Scene* createScene(int last_sceneNum);
 
 	//初始化
 	virtual bool init();
+
+	void menuPauseCallback(CCObject* pSender);
 
 	//生成精灵,特效
 	void createPop(Size size,int color,int x, int y);
@@ -41,11 +44,9 @@ public:
 	//交换两个pop
 	void swapPop();
 
-	//计时函数
-	void timeCount(float dt);
-
 	CREATE_FUNC(MyScene);
-private:
+
+protected:
 	//色块方阵
 	PopSprite* popSquare[SQUARE_WIDTH][SQUARE_HEIGHT];
 
@@ -108,14 +109,28 @@ private:
 	PopSprite* touchEndPop;
 
 	//时间
-	int iTime= 30;
-	
+	int iTime = 10;
+
+
+	//计时函数
+	void timeCount(float dt);
+
+	bool is_pause = false;
+
+	//限定步数
+	int stepLeft=5;
+
+	//过关限定分数线
+	int limitScore=250;
+
 	//分数
 	int iScore = 0;
+
+	//当前关数
+	int sceneNum;
+
 	
 	//精灵表单
 	SpriteBatchNode* spriteSheet;
-
-	
 };
 

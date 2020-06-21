@@ -1,6 +1,3 @@
-#ifndef __HELLOWORLD_SCENE_H__
-#define __HELLOWORLD_SCENE_H__
-
 #define MUSICKEY "musicKey"
 #define SOUNDKEY "soundKey"
 
@@ -14,19 +11,17 @@ public:
     virtual bool init();
 
 	//音乐和音效状态
-	int musicStatus;
-	int soundStatus;
+	bool musicStatus=true;
+	bool soundStatus;
     
     //关闭按钮
     void menuCloseCallback(cocos2d::Ref* pSender);
 	//开始游戏按钮
 	void menuNextCallback(cocos2d::Ref* pSender);
 	//音效开关按钮
-	/*void soundCallback(cocos2d::Ref* pSender);
+	void soundCallback(cocos2d::Ref* pSender);
 	//音乐开关按钮
-	void musicCallback(cocos2d::Ref* pSender);*/
+	void musicCallback(cocos2d::Ref* pSender);
     //初始化方法
     CREATE_FUNC(HelloWorld);
 };
-
-#endif // __HELLOWORLD_SCENE_H__

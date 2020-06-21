@@ -39,31 +39,6 @@ bool PopSprite::setColor(int colors)
 	return true;
 }
 
-void PopSprite::setStatus(int status)
-{
-	iStatus = status;
-	
-	//改变精灵的显示方式
-	SpriteFrame* display;
-	switch (iStatus) {
-	case X_REMOVE_POP:
-		display = SpriteFrameCache::getInstance()->getSpriteFrameByName(XReomvePop[iColor]);
-		break;
-	case Y_REMOVE_POP:
-		display = SpriteFrameCache::getInstance()->getSpriteFrameByName(YRemovePop[iColor]);
-		break;
-	default:
-		return;
-	}
-	//显示
-	setDisplayFrame(display);
-}
-
-int PopSprite::getStatus()
-{
-	return iStatus;
-}
-
 int PopSprite::getPopX()
 {
 	return popX;
@@ -87,21 +62,11 @@ bool PopSprite::setPopY(int y)
 }
 
 bool PopSprite::getCanRemove() {
-	return canRemove;
+		return canRemove;
 }
 
 void PopSprite::setCanRemove(bool state) {
 	canRemove = state;
 }
 
-//获取isNew
-bool PopSprite::getIsNew()
-{
-	return isNew;
-}
 
-//设置isNew
-void PopSprite::setIsNew(bool state)
-{
-	isNew = state;
-}
